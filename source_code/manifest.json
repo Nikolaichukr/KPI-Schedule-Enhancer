@@ -1,0 +1,24 @@
+{
+    "manifest_version": 3,
+    "name": "KPI Schedule Enchancer",
+    "description": "Allows to hide unnecessary disciplines from the page.",
+    "version": "1.0",
+    "permissions": ["storage"],
+    "icons": {
+        "512": "icon.png"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://epi.kpi.ua/*",
+                "*://roz.kpi.ua/*"
+            ],
+            "js": ["contentScript.js"],
+            "css": ["styles.css"],
+            "all_frames": true
+        }
+    ]
+}
