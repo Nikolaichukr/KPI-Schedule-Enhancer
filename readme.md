@@ -50,7 +50,7 @@
 
 Демонстрація роботи зображена на відео нижче.
 
-
+https://github.com/Nikolaichukr/KPI-Schedule-Enhancer/assets/51542378/4c2f89c0-f2b9-48f5-9e0b-f25c96ac94b6
 
 ## Дисклеймер
 
