@@ -4,7 +4,7 @@ let searchInput = document.getElementById("search-input");
 let reloadButton = document.getElementById("reloadButton");
 
 function getStoredData(result) {
-    return result?.[result.currentGroup] ? JSON.parse(result[result.currentGroup]) : [];
+    return result?.[result.currentGroup]?.[result.currentSemester] ? JSON.parse(result[result.currentGroup][result.currentSemester] ) : [];
 }
 
 // Функція для відображення списку обраних дисциплін
@@ -32,7 +32,7 @@ function showDisciplines() {
             deleteButton.addEventListener("click", () => {
                 let discipline = storedData.find(discipline => discipline.name === deleteButton.value);
                 discipline.selected = false;
-                result[result.currentGroup] = JSON.stringify(storedData);
+                result[result.currentGroup][result.currentSemester] = JSON.stringify(storedData);
                 chrome.storage.local.set(result);
                 showDisciplines();
             });
@@ -94,7 +94,7 @@ function showSuggestions(query) {
                     button.addEventListener("click", () => {
                         let suggestion = storedData.find(discipline => discipline.name === button.textContent);
                         if (suggestion) suggestion.selected = true;
-                        result[result.currentGroup] = JSON.stringify(storedData);
+                        result[result.currentGroup][result.currentSemester] = JSON.stringify(storedData);
                         chrome.storage.local.set(result);
                         showDisciplines();
                     });

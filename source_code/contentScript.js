@@ -1,5 +1,6 @@
 let tableCells = document.querySelectorAll("td");  // Отримуємо всі клітинки таблиць
 let filteredCells = Array.from(tableCells).filter(td => td.querySelector("span.disLabel"));  // Фільтруємо лише ті, що містять предмети
+let semesterSelect = document.getElementById("ctl00_MainContent_ddlSemesterType");  // Отримуємо доступ до елемента, що відповідає за вибір семестру
 
 // Отримуємо назви дисциплін зі сторінки розкладу
 function getDisciplinesData() {
@@ -118,7 +119,7 @@ function showAlert(message, duration) {
 // Доповнення поточного списку дисцилін новими, що було додано до розкладу
 function updateDisciplinesList(newDisciplines) {
     chrome.storage.local.get(null, dataFromStorage => {
-        let disciplines = JSON.parse(dataFromStorage[dataFromStorage.currentGroup]);
+        let disciplines = JSON.parse(dataFromStorage[dataFromStorage.currentGroup][dataFromStorage.currentSemester]);
         for (let discipline of newDisciplines) {
             let newDisciplineObj = {
                 name: discipline,
@@ -126,7 +127,7 @@ function updateDisciplinesList(newDisciplines) {
             };
             disciplines.push(newDisciplineObj);
         }
-        dataFromStorage[dataFromStorage.currentGroup] = JSON.stringify(disciplines);
+        dataFromStorage[dataFromStorage.currentGroup][dataFromStorage.currentSemester] = JSON.stringify(disciplines);
         chrome.storage.local.set(dataFromStorage);
     });
 }
@@ -134,7 +135,7 @@ function updateDisciplinesList(newDisciplines) {
 // Перезапис поперднього списку  дисциплін новими
 function rewriteDisciplineList() {
     chrome.storage.local.get(null, dataFromStorage => {
-        dataFromStorage[dataFromStorage.currentGroup] = getDisciplinesData();
+        dataFromStorage[dataFromStorage.currentGroup][dataFromStorage.currentSemester] = getDisciplinesData();
         chrome.storage.local.set(dataFromStorage);
     });
 }
@@ -156,8 +157,13 @@ function discoverChanges(disciplines) {
         showAlert("Схоже, що в розкладі відбулись суттєві зміни.\n\nСкоріш за все, це пов'язано з початком нового семестру.\n\nПопередній список дисциплін було перезаписано.\nОберіть, будь ласка, предмети наново.", 20000);
     }
     // Незалежно від того чи були зміни, приховаємо зайві дисципліни
-    chrome.storage.local.get(null, data => hideNonSelected(JSON.parse(data[data.currentGroup])));
+    chrome.storage.local.get(null, data => hideNonSelected(JSON.parse(data[data.currentGroup][data.currentSemester])));
 }
+
+// Повертаємо поточний семестр
+function getCurrentSemester() {
+    return semesterSelect.options[semesterSelect.selectedIndex].text
+};
 
 // Пробуємо знайти на сторінці елемент з назвою групи
 let element = document.getElementById("ctl00_MainContent_lblHeader");
@@ -165,15 +171,16 @@ let element = document.getElementById("ctl00_MainContent_lblHeader");
 // Якщо елемент присутній - ми на сторінці з розкладом
 if (element) {
     let groupName = element.textContent.split(" ").at(-1);
-    chrome.storage.local.set({ currentGroup: groupName });
+    let currentSemester = getCurrentSemester();
+    chrome.storage.local.set({ currentGroup: groupName, currentSemester: currentSemester });
 
-    chrome.storage.local.get("currentGroup", group => {
+    chrome.storage.local.get(["currentGroup", "currentSemester"], result => {
         chrome.storage.local.get(null, dataFromStorage => {
-            let disciplines = dataFromStorage[group.currentGroup];
+            let disciplines = dataFromStorage[result.currentGroup]?.[result.currentSemester];
             if (disciplines) {
                 discoverChanges(JSON.parse(disciplines));  // Завантажуємо дисципліни зі storage та перевіряжмо чи змінився розклад
             } else { // Записуємо дані до storage
-                dataFromStorage[group.currentGroup] = getDisciplinesData();
+                (dataFromStorage[result.currentGroup] || (dataFromStorage[result.currentGroup] = {}))[result.currentSemester] = getDisciplinesData();
                 chrome.storage.local.set(dataFromStorage);
             }
         });
